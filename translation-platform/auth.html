@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In / Register - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card card">
+            <div class="text-center mb-4">
+                <h1 class="navbar-brand" style="font-size: 2rem;">TransLingo</h1>
+                <p style="color: var(--gray);">Professional Translation Services</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Sign In</button>
+                <button class="auth-tab" data-tab="register">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                <p class="text-center mt-2" style="color: var(--gray); font-size: 0.875rem;">
+                    Demo: employer@test.com / freelancer@test.com / admin@test.com (password: Test1234)
+                </p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form hidden">
+                <!-- Role Selection -->
+                <div class="form-group">
+                    <label>I want to:</label>
+                    <div class="role-selector">
+                        <div class="role-option" data-role="employer">
+                            <div class="role-icon">💼</div>
+                            <div><strong>Hire Translators</strong></div>
+                            <div style="font-size: 0.875rem; color: var(--gray);">Post jobs</div>
+                        </div>
+                        <div class="role-option" data-role="freelancer">
+                            <div class="role-icon">🌍</div>
+                            <div><strong>Work as Translator</strong></div>
+                            <div style="font-size: 0.875rem; color: var(--gray);">Find jobs</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="registerRole" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="registerFirstName">First Name</label>
+                            <input type="text" id="registerFirstName" required>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="registerLastName">Last Name</label>
+                            <input type="text" id="registerLastName" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="registerEmail">Email Address</label>
+                    <input type="email" id="registerEmail" required placeholder="your@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required
+                        placeholder="Min. 8 characters, 1 uppercase, 1 number">
+                </div>
+
+                <!-- Employer-specific fields -->
+                <div id="employerFields" class="hidden">
+                    <div class="form-group">
+                        <label for="companyName">Company Name (Optional)</label>
+                        <input type="text" id="companyName">
+                    </div>
+                </div>
+
+                <!-- Freelancer-specific fields -->
+                <div id="freelancerFields" class="hidden">
+                    <div class="form-group">
+                        <label for="languages">Languages (comma-separated)</label>
+                        <input type="text" id="languages" placeholder="e.g., English, Spanish, French">
+                    </div>
+                    <div class="form-group">
+                        <label for="specializations">Specializations (comma-separated)</label>
+                        <input type="text" id="specializations" placeholder="e.g., Legal, Medical, Technical">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="index.html" style="color: var(--gray); font-size: 0.875rem;">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                // Update active tab
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Show/hide forms
+                document.getElementById('loginForm').classList.toggle('hidden', tabName !== 'login');
+                document.getElementById('registerForm').classList.toggle('hidden', tabName !== 'register');
+            });
+        });
+
+        // Role selection
+        document.querySelectorAll('.role-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const role = option.dataset.role;
+
+                // Update selected state
+                document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+
+                // Set hidden input
+                document.getElementById('registerRole').value = role;
+
+                // Show/hide role-specific fields
+                document.getElementById('employerFields').classList.toggle('hidden', role !== 'employer');
+                document.getElementById('freelancerFields').classList.toggle('hidden', role !== 'freelancer');
+            });
+        });
+
+        // Check URL parameters for default tab/role
+        const urlParams = Utils.getUrlParams();
+        if (urlParams.tab === 'register') {
+            document.querySelector('[data-tab="register"]').click();
+        }
+        if (urlParams.role) {
+            setTimeout(() => {
+                const roleOption = document.querySelector(`[data-role="${urlParams.role}"]`);
+                if (roleOption) roleOption.click();
+            }, 100);
+        }
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const result = Auth.login(email, password);
+
+            if (result.success) {
+                UI.showToast('Login successful!', 'success');
+
+                // Redirect based on role
+                setTimeout(() => {
+                    if (result.user.role === CONFIG.USER_ROLES.EMPLOYER) {
+                        window.location.href = 'employer-dashboard.html';
+                    } else if (result.user.role === CONFIG.USER_ROLES.FREELANCER) {
+                        window.location.href = 'freelancer-dashboard.html';
+                    } else if (result.user.role === CONFIG.USER_ROLES.ADMIN) {
+                        window.location.href = 'admin-dashboard.html';
+                    }
+                }, 500);
+            } else {
+                UI.showToast(result.error, 'error');
+            }
+        });
+
+        // Register form submission
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const role = document.getElementById('registerRole').value;
+
+            if (!role) {
+                UI.showToast('Please select a role', 'error');
+                return;
+            }
+
+            const userData = {
+                role: role,
+                firstName: document.getElementById('registerFirstName').value,
+                lastName: document.getElementById('registerLastName').value,
+                email: document.getElementById('registerEmail').value,
+                password: document.getElementById('registerPassword').value
+            };
+
+            if (role === CONFIG.USER_ROLES.EMPLOYER) {
+                userData.companyName = document.getElementById('companyName').value;
+            } else if (role === CONFIG.USER_ROLES.FREELANCER) {
+                const languages = document.getElementById('languages').value;
+                const specializations = document.getElementById('specializations').value;
+                userData.languages = languages ? languages.split(',').map(l => l.trim()) : [];
+                userData.specializations = specializations ? specializations.split(',').map(s => s.trim()) : [];
+            }
+
+            const result = Auth.register(userData);
+
+            if (result.success) {
+                UI.showToast('Registration successful! Please sign in.', 'success');
+                setTimeout(() => {
+                    document.querySelector('[data-tab="login"]').click();
+                    document.getElementById('loginEmail').value = userData.email;
+                }, 1000);
+            } else {
+                UI.showToast(result.error, 'error');
+            }
+        });
+    </script>
+</body>
+
+</html>

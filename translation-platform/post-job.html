@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Job - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">TransLingo</div>
+            <ul class="navbar-menu">
+                <li><a href="employer-dashboard.html">Dashboard</a></li>
+                <li><a href="post-job.html">Post Job</a></li>
+                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="notification-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" style="display: none;">0</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="userMenuBtn">
+                    <span id="userName">User</span> ▾
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Post Job Form -->
+    <div class="container" style="padding: var(--spacing-2xl) 0;">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <h1>Post a Translation Job</h1>
+            <p style="color: var(--gray); margin-bottom: var(--spacing-2xl);">Fill in the details below to find the
+                perfect translator for your project</p>
+
+            <form id="postJobForm" class="card">
+                <!-- Job Title -->
+                <div class="form-group">
+                    <label for="jobTitle">Job Title *</label>
+                    <input type="text" id="jobTitle" required
+                        placeholder="e.g., Technical Manual Translation - English to Spanish">
+                </div>
+
+                <!-- Language Pair -->
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="sourceLang">Source Language *</label>
+                            <select id="sourceLang" required>
+                                <option value="">Select language</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="targetLang">Target Language *</label>
+                            <select id="targetLang" required>
+                                <option value="">Select language</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Type & Specialization -->
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="documentType">Document Type *</label>
+                            <select id="documentType" required>
+                                <option value="">Select type</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="specialization">Specialization</label>
+                            <select id="specialization">
+                                <option value="">Select specialization</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="description">Job Description *</label>
+                    <textarea id="description" required
+                        placeholder="Describe your translation project in detail..."></textarea>
+                </div>
+
+                <!-- Word Count & Budget -->
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="wordCount">Word Count *</label>
+                            <input type="number" id="wordCount" required min="1" placeholder="e.g., 5000">
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="budget">Budget (USD) *</label>
+                            <input type="number" id="budget" required min="1" step="0.01" placeholder="e.g., 500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deadline & Urgency -->
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="deadline">Deadline *</label>
+                            <input type="date" id="deadline" required>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="urgency">Urgency Level *</label>
+                            <select id="urgency" required>
+                                <option value="regular">Regular (7+ days) - Standard rate</option>
+                                <option value="express">Express (3-6 days) - 1.5x rate</option>
+                                <option value="rush">Rush (1-2 days) - 2x rate</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirements -->
+                <div class="form-group">
+                    <label for="requirements">Special Requirements</label>
+                    <textarea id="requirements"
+                        placeholder="Any specific requirements, certifications needed, or preferences..."></textarea>
+                </div>
+
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label>Attach Documents (Optional)</label>
+                    <div class="file-upload" id="fileUpload">
+                        <i class="fas fa-cloud-upload-alt"
+                            style="font-size: 2rem; color: var(--primary); margin-bottom: var(--spacing-sm);"></i>
+                        <p>Click to upload or drag and drop</p>
+                        <p style="font-size: 0.875rem; color: var(--gray);">PDF, DOC, DOCX, TXT, ODT (Max 10MB)</p>
+                        <input type="file" id="fileInput" style="display: none;" multiple
+                            accept=".pdf,.doc,.docx,.txt,.odt">
+                    </div>
+                    <div id="fileList" class="file-list"></div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2 justify-between" style="margin-top: var(--spacing-xl);">
+                    <a href="employer-dashboard.html" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Post Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/jobs.js"></script>
+    <script src="js/files.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!Auth.requireAuth() || !Auth.hasRole(CONFIG.USER_ROLES.EMPLOYER)) {
+            window.location.href = 'auth.html';
+        }
+
+        const currentUser = Auth.getCurrentUser();
+        document.getElementById('userName').textContent = currentUser.firstName;
+
+        // Populate language dropdowns
+        CONFIG.LANGUAGES.forEach(lang => {
+            const option1 = document.createElement('option');
+            option1.value = lang;
+            option1.textContent = lang;
+            document.getElementById('sourceLang').appendChild(option1);
+
+            const option2 = document.createElement('option');
+            option2.value = lang;
+            option2.textContent = lang;
+            document.getElementById('targetLang').appendChild(option2);
+        });
+
+        // Populate document types
+        CONFIG.DOCUMENT_TYPES.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            document.getElementById('documentType').appendChild(option);
+        });
+
+        // Populate specializations
+        CONFIG.SPECIALIZATIONS.forEach(spec => {
+            const option = document.createElement('option');
+            option.value = spec;
+            option.textContent = spec;
+            document.getElementById('specialization').appendChild(option);
+        });
+
+        // Set minimum deadline to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('deadline').min = tomorrow.toISOString().split('T')[0];
+
+        // File upload handling
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        let uploadedFiles = [];
+
+        fileUpload.addEventListener('click', () => fileInput.click());
+
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                const validation = Files.validateFile(file);
+                if (validation.isValid) {
+                    uploadedFiles.push(file);
+                    displayFile(file);
+                } else {
+                    UI.showToast(validation.errors[0], 'error');
+                }
+            });
+        }
+
+        function displayFile(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <div>
+                    <div class="file-item-name"><i class="fas fa-file"></i> ${Utils.escapeHTML(file.name)}</div>
+                    <div class="file-item-size">${UI.formatFileSize(file.size)}</div>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeFile('${file.name}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            fileList.appendChild(fileItem);
+        }
+
+        window.removeFile = function (fileName) {
+            uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+            const fileItems = fileList.querySelectorAll('.file-item');
+            fileItems.forEach(item => {
+                if (item.textContent.includes(fileName)) {
+                    item.remove();
+                }
+            });
+        };
+
+        // Form submission
+        document.getElementById('postJobForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            UI.showLoading(submitBtn);
+
+            const jobData = {
+                title: document.getElementById('jobTitle').value,
+                sourceLang: document.getElementById('sourceLang').value,
+                targetLang: document.getElementById('targetLang').value,
+                documentType: document.getElementById('documentType').value,
+                specialization: document.getElementById('specialization').value,
+                description: document.getElementById('description').value,
+                wordCount: document.getElementById('wordCount').value,
+                budget: document.getElementById('budget').value,
+                deadline: document.getElementById('deadline').value,
+                urgency: document.getElementById('urgency').value,
+                requirements: document.getElementById('requirements').value,
+                files: uploadedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
+            };
+
+            const result = Jobs.create(jobData);
+
+            UI.hideLoading(submitBtn);
+
+            if (result.success) {
+                UI.showToast('Job posted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'employer-dashboard.html';
+                }, 1000);
+            } else {
+                UI.showToast(result.error, 'error');
+            }
+        });
+
+        // Logout
+        document.getElementById('userMenuBtn').addEventListener('click', () => {
+            if (confirm('Do you want to logout?')) {
+                Auth.logout();
+            }
+        });
+
+        // Update notification badge
+        Notifications.updateBadge();
+    </script>
+</body>
+
+</html>

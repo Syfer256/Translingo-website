@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">TransLingo Admin</div>
+            <ul class="navbar-menu">
+                <li><a href="admin-dashboard.html">Dashboard</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <button class="btn btn-secondary btn-sm" id="userMenuBtn">
+                    <span id="userName">Admin</span> ▾
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-panel">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Platform Administration</h1>
+                <p class="dashboard-subtitle">Monitor and manage the TransLingo platform</p>
+            </div>
+
+            <!-- Platform Stats -->
+            <div class="dashboard-stats" id="platformStats"></div>
+
+            <!-- Tabs -->
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-tab="overview">Overview</button>
+                <button class="admin-tab" data-tab="users">Users</button>
+                <button class="admin-tab" data-tab="transactions">Transactions</button>
+                <button class="admin-tab" data-tab="jobs">Jobs</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tabContent"></div>
+        </div>
+    </div>
+
+    <!-- User Action Modal -->
+    <div id="userActionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">User Actions</h2>
+                <button class="modal-close" onclick="UI.hideModal('userActionModal')">&times;</button>
+            </div>
+            <div id="userActionContent"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/jobs.js"></script>
+    <script src="js/proposals.js"></script>
+    <script src="js/payments.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!Auth.requireAuth() || !Auth.hasRole(CONFIG.USER_ROLES.ADMIN)) {
+            window.location.href = 'auth.html';
+        }
+
+        const currentUser = Auth.getCurrentUser();
+        document.getElementById('userName').textContent = currentUser.firstName;
+
+        // Load platform stats
+        const stats = Admin.getPlatformStats();
+        const revenue = Admin.getPlatformRevenue();
+
+        document.getElementById('platformStats').innerHTML = `
+            <div class="stat-card">
+                <div class="stat-value">${stats.totalUsers}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, var(--success), #059669);">
+                <div class="stat-value">${stats.totalJobs}</div>
+                <div class="stat-label">Total Jobs</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, var(--warning), #d97706);">
+                <div class="stat-value">${stats.totalTransactions}</div>
+                <div class="stat-label">Transactions</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, var(--accent), #db2777);">
+                <div class="stat-value">${Utils.formatCurrency(revenue)}</div>
+                <div class="stat-label">Platform Revenue</div>
+            </div>
+        `;
+
+        // Tab switching
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                loadTabContent(tab.dataset.tab);
+            });
+        });
+
+        function loadTabContent(tabName) {
+            const tabContent = document.getElementById('tabContent');
+
+            switch (tabName) {
+                case 'overview':
+                    showOverview();
+                    break;
+                case 'users':
+                    showUsers();
+                    break;
+                case 'transactions':
+                    showTransactions();
+                    break;
+                case 'jobs':
+                    showJobs();
+                    break;
+            }
+        }
+
+        function showOverview() {
+            const tabContent = document.getElementById('tabContent');
+            const users = Admin.getAllUsers();
+            const jobs = Jobs.getAll();
+            const transactions = Admin.getAllTransactions();
+
+            const activeJobs = jobs.filter(j => j.status === CONFIG.JOB_STATUS.IN_PROGRESS).length;
+            const completedJobs = jobs.filter(j => j.status === CONFIG.JOB_STATUS.COMPLETED).length;
+            const employers = users.filter(u => u.role === CONFIG.USER_ROLES.EMPLOYER).length;
+            const freelancers = users.filter(u => u.role === CONFIG.USER_ROLES.FREELANCER).length;
+
+            tabContent.innerHTML = `
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card">
+                            <h3>User Distribution</h3>
+                            <div style="margin-top: var(--spacing-lg);">
+                                <div class="d-flex justify-between mb-2">
+                                    <span>Employers</span>
+                                    <strong>${employers}</strong>
+                                </div>
+                                <div class="d-flex justify-between mb-2">
+                                    <span>Freelancers</span>
+                                    <strong>${freelancers}</strong>
+                                </div>
+                                <div class="d-flex justify-between">
+                                    <span>Admins</span>
+                                    <strong>${users.filter(u => u.role === CONFIG.USER_ROLES.ADMIN).length}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card">
+                            <h3>Job Statistics</h3>
+                            <div style="margin-top: var(--spacing-lg);">
+                                <div class="d-flex justify-between mb-2">
+                                    <span>Open Jobs</span>
+                                    <strong>${jobs.filter(j => j.status === CONFIG.JOB_STATUS.OPEN).length}</strong>
+                                </div>
+                                <div class="d-flex justify-between mb-2">
+                                    <span>In Progress</span>
+                                    <strong>${activeJobs}</strong>
+                                </div>
+                                <div class="d-flex justify-between">
+                                    <span>Completed</span>
+                                    <strong>${completedJobs}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <h3>Recent Activity</h3>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${transactions.slice(0, 10).map(t => {
+                const job = Jobs.getById(t.jobId);
+                return `
+                                        <tr>
+                                            <td>${Utils.formatDate(t.createdAt)}</td>
+                                            <td><span class="badge badge-info">Transaction</span></td>
+                                            <td>${job ? Utils.truncate(job.title, 50) : 'N/A'}</td>
+                                            <td><strong>${Utils.formatCurrency(t.totalAmount)}</strong></td>
+                                        </tr>
+                                    `;
+            }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showUsers() {
+            const tabContent = document.getElementById('tabContent');
+            const users = Admin.getAllUsers();
+
+            tabContent.innerHTML = `
+                <div class="card">
+                    <h2>User Management</h2>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${users.map(user => `
+                                    <tr>
+                                        <td><strong>${user.firstName} ${user.lastName}</strong></td>
+                                        <td>${user.email}</td>
+                                        <td><span class="badge badge-primary">${user.role}</span></td>
+                                        <td>
+                                            <span class="badge ${user.isActive ? 'badge-success' : 'badge-error'}">
+                                                ${user.isActive ? 'Active' : 'Suspended'}
+                                            </span>
+                                            ${user.isVerified ? '<span class="badge badge-info ml-1">Verified</span>' : ''}
+                                        </td>
+                                        <td>${Utils.formatDate(user.createdAt)}</td>
+                                        <td>
+                                            ${user.role !== CONFIG.USER_ROLES.ADMIN ? `
+                                                <button class="btn btn-sm btn-outline" onclick="manageUser('${user.id}')">
+                                                    <i class="fas fa-cog"></i> Manage
+                                                </button>
+                                            ` : ''}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showTransactions() {
+            const tabContent = document.getElementById('tabContent');
+            const transactions = Admin.getAllTransactions();
+
+            tabContent.innerHTML = `
+                <div class="card">
+                    <h2>Transaction Monitoring</h2>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Job</th>
+                                    <th>Employer</th>
+                                    <th>Freelancer</th>
+                                    <th>Amount</th>
+                                    <th>Platform Fee</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${transactions.map(t => {
+                const job = Jobs.getById(t.jobId);
+                const employer = Auth.getUserById(t.employerId);
+                const freelancer = Auth.getUserById(t.freelancerId);
+                const statusBadge = {
+                    [CONFIG.PAYMENT_STATUS.PENDING]: 'badge-warning',
+                    [CONFIG.PAYMENT_STATUS.HELD]: 'badge-info',
+                    [CONFIG.PAYMENT_STATUS.RELEASED]: 'badge-success',
+                    [CONFIG.PAYMENT_STATUS.REFUNDED]: 'badge-error'
+                }[t.status] || 'badge-primary';
+
+                return `
+                                        <tr>
+                                            <td>${Utils.formatDate(t.createdAt)}</td>
+                                            <td>${job ? Utils.truncate(job.title, 30) : 'N/A'}</td>
+                                            <td>${employer ? `${employer.firstName} ${employer.lastName}` : 'N/A'}</td>
+                                            <td>${freelancer ? `${freelancer.firstName} ${freelancer.lastName}` : 'N/A'}</td>
+                                            <td><strong>${Utils.formatCurrency(t.totalAmount)}</strong></td>
+                                            <td>${Utils.formatCurrency(t.platformFee)}</td>
+                                            <td><span class="badge ${statusBadge}">${t.status}</span></td>
+                                        </tr>
+                                    `;
+            }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showJobs() {
+            const tabContent = document.getElementById('tabContent');
+            const jobs = Jobs.getAll();
+
+            tabContent.innerHTML = `
+                <div class="card">
+                    <h2>Job Management</h2>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Employer</th>
+                                    <th>Languages</th>
+                                    <th>Budget</th>
+                                    <th>Proposals</th>
+                                    <th>Status</th>
+                                    <th>Posted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${jobs.map(job => {
+                const statusBadge = {
+                    [CONFIG.JOB_STATUS.OPEN]: 'badge-success',
+                    [CONFIG.JOB_STATUS.IN_PROGRESS]: 'badge-warning',
+                    [CONFIG.JOB_STATUS.COMPLETED]: 'badge-info',
+                    [CONFIG.JOB_STATUS.DISPUTED]: 'badge-error'
+                }[job.status] || 'badge-primary';
+
+                return `
+                                        <tr>
+                                            <td>
+                                                <a href="job-detail.html?id=${job.id}" style="font-weight: 600;">
+                                                    ${Utils.truncate(job.title, 40)}
+                                                </a>
+                                            </td>
+                                            <td>${job.employerName}</td>
+                                            <td>${job.sourceLang} → ${job.targetLang}</td>
+                                            <td>${Utils.formatCurrency(job.budget)}</td>
+                                            <td>${job.proposalCount}</td>
+                                            <td><span class="badge ${statusBadge}">${job.status.replace('_', ' ')}</span></td>
+                                            <td>${Utils.formatDate(job.createdAt)}</td>
+                                        </tr>
+                                    `;
+            }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.manageUser = function (userId) {
+            const user = Auth.getUserById(userId);
+            const modalContent = document.getElementById('userActionContent');
+
+            modalContent.innerHTML = `
+                <div>
+                    <h3>${user.firstName} ${user.lastName}</h3>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Role:</strong> ${user.role}</p>
+                    <p><strong>Status:</strong> ${user.isActive ? 'Active' : 'Suspended'}</p>
+                    <p><strong>Verified:</strong> ${user.isVerified ? 'Yes' : 'No'}</p>
+
+                    <div style="margin-top: var(--spacing-xl); display: flex; gap: var(--spacing-md);">
+                        ${!user.isVerified ? `
+                            <button class="btn btn-success" onclick="verifyUser('${userId}')">
+                                <i class="fas fa-check-circle"></i> Verify User
+                            </button>
+                        ` : ''}
+                        ${user.isActive ? `
+                            <button class="btn btn-warning" onclick="suspendUser('${userId}')">
+                                <i class="fas fa-ban"></i> Suspend User
+                            </button>
+                        ` : `
+                            <button class="btn btn-success" onclick="activateUser('${userId}')">
+                                <i class="fas fa-check"></i> Activate User
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+
+            UI.showModal('userActionModal');
+        };
+
+        window.verifyUser = function (userId) {
+            const result = Admin.verifyUser(userId);
+            if (result.success) {
+                UI.showToast('User verified successfully', 'success');
+                UI.hideModal('userActionModal');
+                showUsers();
+            } else {
+                UI.showToast(result.error, 'error');
+            }
+        };
+
+        window.suspendUser = function (userId) {
+            UI.confirm('Suspend this user?', () => {
+                const result = Admin.suspendUser(userId);
+                if (result.success) {
+                    UI.showToast('User suspended', 'success');
+                    UI.hideModal('userActionModal');
+                    showUsers();
+                } else {
+                    UI.showToast(result.error, 'error');
+                }
+            });
+        };
+
+        window.activateUser = function (userId) {
+            const result = Admin.activateUser(userId);
+            if (result.success) {
+                UI.showToast('User activated', 'success');
+                UI.hideModal('userActionModal');
+                showUsers();
+            } else {
+                UI.showToast(result.error, 'error');
+            }
+        };
+
+        // Initial load
+        showOverview();
+
+        // Logout
+        document.getElementById('userMenuBtn').addEventListener('click', () => {
+            if (confirm('Do you want to logout?')) {
+                Auth.logout();
+            }
+        });
+    </script>
+</body>
+
+</html>

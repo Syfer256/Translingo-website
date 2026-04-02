@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">TransLingo</div>
+            <ul class="navbar-menu" id="navMenu"></ul>
+            <div class="navbar-actions">
+                <div class="notification-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" style="display: none;">0</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="userMenuBtn">
+                    <span id="userName">User</span> ▾
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Transactions Page -->
+    <div class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title" id="pageTitle">Transactions</h1>
+                <p class="dashboard-subtitle" id="pageSubtitle">View your payment history</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="dashboard-stats" id="summaryCards"></div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <h2 style="margin-bottom: var(--spacing-lg);">Transaction History</h2>
+                <div id="transactionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Detail Modal -->
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Transaction Details</h2>
+                <button class="modal-close" onclick="UI.hideModal('transactionModal')">&times;</button>
+            </div>
+            <div id="transactionModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/jobs.js"></script>
+    <script src="js/proposals.js"></script>
+    <script src="js/payments.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!Auth.requireAuth()) {
+            window.location.href = 'auth.html';
+        }
+
+        const currentUser = Auth.getCurrentUser();
+        document.getElementById('userName').textContent = currentUser.firstName;
+
+        // Set up navigation based on role
+        const navMenu = document.getElementById('navMenu');
+        if (currentUser.role === CONFIG.USER_ROLES.EMPLOYER) {
+            navMenu.innerHTML = `
+                <li><a href="employer-dashboard.html">Dashboard</a></li>
+                <li><a href="post-job.html">Post Job</a></li>
+                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            `;
+            document.getElementById('pageSubtitle').textContent = 'View your payment history and escrow status';
+        } else if (currentUser.role === CONFIG.USER_ROLES.FREELANCER) {
+            navMenu.innerHTML = `
+                <li><a href="freelancer-dashboard.html">Dashboard</a></li>
+                <li><a href="jobs.html">Browse Jobs</a></li>
+                <li><a href="transactions.html">Earnings</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            `;
+            document.getElementById('pageTitle').textContent = 'Earnings';
+            document.getElementById('pageSubtitle').textContent = 'Track your earnings and payment history';
+        }
+
+        // Load transactions
+        const transactions = Payments.getByUser(currentUser.id);
+
+        // Calculate summary
+        const summary = {
+            total: transactions.length,
+            pending: transactions.filter(t => t.status === CONFIG.PAYMENT_STATUS.PENDING).length,
+            held: transactions.filter(t => t.status === CONFIG.PAYMENT_STATUS.HELD).length,
+            released: transactions.filter(t => t.status === CONFIG.PAYMENT_STATUS.RELEASED).length,
+            totalAmount: transactions.reduce((sum, t) => sum + t.totalAmount, 0)
+        };
+
+        // Display summary cards
+        const summaryCards = document.getElementById('summaryCards');
+        if (currentUser.role === CONFIG.USER_ROLES.EMPLOYER) {
+            summaryCards.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${summary.total}</div>
+                    <div class="stat-label">Total Transactions</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--warning), #d97706);">
+                    <div class="stat-value">${summary.held}</div>
+                    <div class="stat-label">In Escrow</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--success), #059669);">
+                    <div class="stat-value">${summary.released}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--accent), #db2777);">
+                    <div class="stat-value">${Utils.formatCurrency(summary.totalAmount)}</div>
+                    <div class="stat-label">Total Spent</div>
+                </div>
+            `;
+        } else {
+            const earnings = transactions
+                .filter(t => t.status === CONFIG.PAYMENT_STATUS.RELEASED)
+                .reduce((sum, t) => sum + t.freelancerAmount, 0);
+            const pending = transactions
+                .filter(t => t.status === CONFIG.PAYMENT_STATUS.HELD)
+                .reduce((sum, t) => sum + t.freelancerAmount, 0);
+
+            summaryCards.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${summary.released}</div>
+                    <div class="stat-label">Completed Jobs</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--warning), #d97706);">
+                    <div class="stat-value">${Utils.formatCurrency(pending)}</div>
+                    <div class="stat-label">Pending Earnings</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--success), #059669);">
+                    <div class="stat-value">${Utils.formatCurrency(earnings)}</div>
+                    <div class="stat-label">Total Earned</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--accent), #db2777);">
+                    <div class="stat-value">${Utils.formatCurrency(earnings * 0.15)}</div>
+                    <div class="stat-label">Platform Fees Paid</div>
+                </div>
+            `;
+        }
+
+        // Display transactions
+        const transactionsList = document.getElementById('transactionsList');
+
+        if (transactions.length === 0) {
+            transactionsList.innerHTML = '<div class="empty-state"><p>No transactions yet</p></div>';
+        } else {
+            transactionsList.innerHTML = `
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Job</th>
+                                <th>Amount</th>
+                                ${currentUser.role === CONFIG.USER_ROLES.EMPLOYER ? '<th>Freelancer</th>' : '<th>Employer</th>'}
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${transactions.map(transaction => {
+                const job = Jobs.getById(transaction.jobId);
+                const otherUser = currentUser.role === CONFIG.USER_ROLES.EMPLOYER
+                    ? Auth.getUserById(transaction.freelancerId)
+                    : Auth.getUserById(transaction.employerId);
+
+                const statusBadge = {
+                    [CONFIG.PAYMENT_STATUS.PENDING]: 'badge-warning',
+                    [CONFIG.PAYMENT_STATUS.HELD]: 'badge-info',
+                    [CONFIG.PAYMENT_STATUS.RELEASED]: 'badge-success',
+                    [CONFIG.PAYMENT_STATUS.REFUNDED]: 'badge-error'
+                }[transaction.status] || 'badge-primary';
+
+                const amount = currentUser.role === CONFIG.USER_ROLES.EMPLOYER
+                    ? transaction.totalAmount
+                    : transaction.freelancerAmount;
+
+                return `
+                                    <tr>
+                                        <td>${Utils.formatDate(transaction.createdAt)}</td>
+                                        <td>
+                                            <a href="job-detail.html?id=${job.id}" style="font-weight: 600;">
+                                                ${Utils.truncate(job.title, 40)}
+                                            </a>
+                                        </td>
+                                        <td><strong>${Utils.formatCurrency(amount)}</strong></td>
+                                        <td>${otherUser ? `${otherUser.firstName} ${otherUser.lastName}` : 'N/A'}</td>
+                                        <td><span class="badge ${statusBadge}">${transaction.status}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline" onclick="viewTransaction('${transaction.id}')">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                            ${transaction.status === CONFIG.PAYMENT_STATUS.HELD && currentUser.role === CONFIG.USER_ROLES.EMPLOYER ? `
+                                                <button class="btn btn-sm btn-success" onclick="releasePayment('${transaction.id}')">
+                                                    <i class="fas fa-check"></i> Release
+                                                </button>
+                                            ` : ''}
+                                        </td>
+                                    </tr>
+                                `;
+            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // View transaction details
+        window.viewTransaction = function (transactionId) {
+            const transaction = Payments.getById(transactionId);
+            const job = Jobs.getById(transaction.jobId);
+            const freelancer = Auth.getUserById(transaction.freelancerId);
+            const employer = Auth.getUserById(transaction.employerId);
+
+            const modalContent = document.getElementById('transactionModalContent');
+            modalContent.innerHTML = `
+                <div style="line-height: 1.8;">
+                    <h3>Job Details</h3>
+                    <p><strong>Title:</strong> ${job.title}</p>
+                    <p><strong>Languages:</strong> ${job.sourceLang} → ${job.targetLang}</p>
+                    
+                    <h3 style="margin-top: var(--spacing-lg);">Payment Breakdown</h3>
+                    <table style="width: 100%; margin-top: var(--spacing-md);">
+                        <tr>
+                            <td>Total Amount:</td>
+                            <td style="text-align: right;"><strong>${Utils.formatCurrency(transaction.totalAmount)}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Platform Fee (15%):</td>
+                            <td style="text-align: right;">${Utils.formatCurrency(transaction.platformFee)}</td>
+                        </tr>
+                        <tr style="border-top: 2px solid var(--gray-lighter);">
+                            <td><strong>Freelancer Receives:</strong></td>
+                            <td style="text-align: right;"><strong>${Utils.formatCurrency(transaction.freelancerAmount)}</strong></td>
+                        </tr>
+                    </table>
+
+                    <h3 style="margin-top: var(--spacing-lg);">Parties</h3>
+                    <p><strong>Employer:</strong> ${employer.firstName} ${employer.lastName}</p>
+                    <p><strong>Freelancer:</strong> ${freelancer.firstName} ${freelancer.lastName}</p>
+
+                    <h3 style="margin-top: var(--spacing-lg);">Timeline</h3>
+                    <p><strong>Created:</strong> ${Utils.formatDate(transaction.createdAt, 'long')}</p>
+                    ${transaction.heldAt ? `<p><strong>Held in Escrow:</strong> ${Utils.formatDate(transaction.heldAt, 'long')}</p>` : ''}
+                    ${transaction.releasedAt ? `<p><strong>Released:</strong> ${Utils.formatDate(transaction.releasedAt, 'long')}</p>` : ''}
+                    ${transaction.refundedAt ? `<p><strong>Refunded:</strong> ${Utils.formatDate(transaction.refundedAt, 'long')}</p>` : ''}
+                </div>
+            `;
+
+            UI.showModal('transactionModal');
+        };
+
+        // Release payment
+        window.releasePayment = function (transactionId) {
+            UI.confirm('Release payment to freelancer? This action cannot be undone.', () => {
+                const result = Payments.releasePayment(transactionId);
+                if (result.success) {
+                    UI.showToast('Payment released successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    UI.showToast(result.error, 'error');
+                }
+            });
+        };
+
+        // Logout
+        document.getElementById('userMenuBtn').addEventListener('click', () => {
+            if (confirm('Do you want to logout?')) {
+                Auth.logout();
+            }
+        });
+
+        Notifications.updateBadge();
+    </script>
+</body>
+
+</html>

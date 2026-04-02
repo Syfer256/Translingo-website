@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancer Dashboard - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">TransLingo</div>
+            <ul class="navbar-menu">
+                <li><a href="freelancer-dashboard.html">Dashboard</a></li>
+                <li><a href="jobs.html">Browse Jobs</a></li>
+                <li><a href="transactions.html">Earnings</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="notification-icon" onclick="window.location.href='#notifications'">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" style="display: none;">0</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="userMenuBtn">
+                    <span id="userName">User</span> ▾
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Freelancer Dashboard</h1>
+                <p class="dashboard-subtitle">Manage your translation projects</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="statCompletedJobs">0</div>
+                    <div class="stat-label">Completed Jobs</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--success), #059669);">
+                    <div class="stat-value" id="statActiveJobs">0</div>
+                    <div class="stat-label">Active Jobs</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--warning), #d97706);">
+                    <div class="stat-value" id="statRating">0.0</div>
+                    <div class="stat-label">Rating</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, var(--accent), #db2777);">
+                    <div class="stat-value" id="statTotalEarnings">$0</div>
+                    <div class="stat-label">Total Earnings</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">Quick Actions</h2>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        <a href="jobs.html" class="card" style="text-align: center; cursor: pointer;">
+                            <div style="font-size: 3rem; margin-bottom: var(--spacing-md); color: var(--primary);"><i
+                                    class="fas fa-search"></i></div>
+                            <h3>Browse Jobs</h3>
+                            <p style="color: var(--gray);">Find new translation projects</p>
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="profile.html?id=${currentUser?.id}" class="card"
+                            style="text-align: center; cursor: pointer;">
+                            <div style="font-size: 3rem; margin-bottom: var(--spacing-md); color: var(--primary);"><i
+                                    class="fas fa-user"></i></div>
+                            <h3>My Profile</h3>
+                            <p style="color: var(--gray);">Update your portfolio</p>
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="messages.html" class="card" style="text-align: center; cursor: pointer;">
+                            <div style="font-size: 3rem; margin-bottom: var(--spacing-md); color: var(--primary);"><i
+                                    class="fas fa-comments"></i></div>
+                            <h3>Messages</h3>
+                            <p style="color: var(--gray);">Chat with clients</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Proposals -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">Your Proposals</h2>
+                    <a href="jobs.html" class="btn btn-primary">Browse Jobs</a>
+                </div>
+                <div id="proposalsList"></div>
+            </div>
+
+            <!-- Available Jobs -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">Recommended Jobs</h2>
+                    <a href="jobs.html" class="btn btn-outline">View All</a>
+                </div>
+                <div id="recommendedJobs"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/jobs.js"></script>
+    <script src="js/proposals.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!Auth.requireAuth() || !Auth.hasRole(CONFIG.USER_ROLES.FREELANCER)) {
+            window.location.href = 'auth.html';
+        }
+
+        const currentUser = Auth.getCurrentUser();
+
+        // Update user name in nav
+        document.getElementById('userName').textContent = currentUser.firstName;
+
+        // Load stats
+        const myProposals = Proposals.getByFreelancer(currentUser.id);
+        const activeProposals = myProposals.filter(p => p.status === CONFIG.PROPOSAL_STATUS.ACCEPTED);
+
+        document.getElementById('statCompletedJobs').textContent = currentUser.completedJobs || 0;
+        document.getElementById('statActiveJobs').textContent = activeProposals.length;
+        document.getElementById('statRating').textContent = (currentUser.rating || 0).toFixed(1);
+        document.getElementById('statTotalEarnings').textContent = Utils.formatCurrency(currentUser.totalEarnings || 0);
+
+        // Load proposals
+        function renderProposals() {
+            const proposalsList = document.getElementById('proposalsList');
+
+            if (myProposals.length === 0) {
+                proposalsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>You haven't submitted any proposals yet</p>
+                        <a href="jobs.html" class="btn btn-primary mt-2">Browse Available Jobs</a>
+                    </div>
+                `;
+                return;
+            }
+
+            proposalsList.innerHTML = myProposals.map(proposal => {
+                const job = Jobs.getById(proposal.jobId);
+                if (!job) return '';
+
+                const statusBadge = {
+                    [CONFIG.PROPOSAL_STATUS.PENDING]: 'badge-warning',
+                    [CONFIG.PROPOSAL_STATUS.ACCEPTED]: 'badge-success',
+                    [CONFIG.PROPOSAL_STATUS.REJECTED]: 'badge-error',
+                    [CONFIG.PROPOSAL_STATUS.WITHDRAWN]: 'badge-info'
+                }[proposal.status] || 'badge-primary';
+
+                return `
+                    <div class="card mb-2">
+                        <div class="d-flex justify-between align-center">
+                            <div>
+                                <h4>${Utils.escapeHTML(job.title)}</h4>
+                                <div class="mt-1">
+                                    <span class="badge ${statusBadge}">${proposal.status}</span>
+                                    <span class="badge badge-primary ml-1">${job.sourceLang} → ${job.targetLang}</span>
+                                </div>
+                                <p class="mt-1" style="color: var(--gray); font-size: 0.875rem;">
+                                    Submitted ${Utils.formatRelativeTime(proposal.createdAt)}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
+                                    ${Utils.formatCurrency(proposal.quotedPrice)}
+                                </div>
+                                <a href="job-detail.html?id=${job.id}" class="btn btn-sm btn-outline mt-1">View Job</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Load recommended jobs
+        function renderRecommendedJobs() {
+            const recommendedJobs = document.getElementById('recommendedJobs');
+            const availableJobs = Jobs.getActiveJobs().slice(0, 3);
+
+            if (availableJobs.length === 0) {
+                recommendedJobs.innerHTML = `
+                    <div class="empty-state">
+                        <p>No jobs available at the moment</p>
+                    </div>
+                `;
+                return;
+            }
+
+            recommendedJobs.innerHTML = availableJobs.map(job => `
+                <div class="job-card" onclick="window.location.href='job-detail.html?id=${job.id}'">
+                    <div class="job-card-header">
+                        <div>
+                            <h3 class="job-card-title">${Utils.escapeHTML(job.title)}</h3>
+                            <div class="job-card-languages">
+                                <span class="language-badge">${job.sourceLang} → ${job.targetLang}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="job-card-meta">
+                        <span class="job-card-meta-item">📄 ${Utils.formatNumber(job.wordCount)} words</span>
+                        <span class="job-card-meta-item">📅 ${Utils.formatDate(job.deadline)}</span>
+                        <span class="job-card-meta-item">💼 ${job.documentType}</span>
+                    </div>
+                    <p class="job-card-description">${Utils.truncate(job.description, 150)}</p>
+                    <div class="job-card-footer">
+                        <div><strong>${job.proposalCount} proposal${job.proposalCount !== 1 ? 's' : ''}</strong></div>
+                        <div class="job-card-price">${Utils.formatCurrency(job.budget)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        renderProposals();
+        renderRecommendedJobs();
+
+        // Update notification badge
+        Notifications.updateBadge();
+
+        // Logout functionality
+        document.getElementById('userMenuBtn').addEventListener('click', () => {
+            if (confirm('Do you want to logout?')) {
+                Auth.logout();
+            }
+        });
+    </script>
+</body>
+
+</html>

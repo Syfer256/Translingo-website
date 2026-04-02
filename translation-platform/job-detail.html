@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Details - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">TransLingo</div>
+            <ul class="navbar-menu" id="navMenu"></ul>
+            <div class="navbar-actions">
+                <div class="notification-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" style="display: none;">0</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="userMenuBtn">
+                    <span id="userName">User</span> ▾
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Job Detail -->
+    <div class="job-detail">
+        <div class="container">
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-8">
+                    <!-- Job Header -->
+                    <div class="job-detail-header">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <h1 class="job-detail-title" id="jobTitle">Loading...</h1>
+                            <div id="jobStatus"></div>
+                        </div>
+                        <div class="job-card-languages" id="jobLanguages"></div>
+                        <div class="job-card-meta" id="jobMeta" style="margin-top: var(--spacing-md);"></div>
+                    </div>
+
+                    <!-- Job Description -->
+                    <div class="job-detail-content">
+                        <h3>Job Description</h3>
+                        <p id="jobDescription"></p>
+
+                        <h3 style="margin-top: var(--spacing-xl);">Requirements</h3>
+                        <p id="jobRequirements"></p>
+
+                        <div id="jobFiles"></div>
+                    </div>
+
+                    <!-- Proposals Section (Employer View) -->
+                    <div id="proposalsSection" class="hidden">
+                        <h2 style="margin-top: var(--spacing-2xl); margin-bottom: var(--spacing-lg);">
+                            Proposals (<span id="proposalCount">0</span>)
+                        </h2>
+                        <div id="proposalsList"></div>
+                    </div>
+
+                    <!-- Proposal Form (Freelancer View) -->
+                    <div id="proposalFormSection" class="hidden">
+                        <div class="proposal-form">
+                            <h2>Submit Your Proposal</h2>
+                            <form id="proposalForm">
+                                <div class="form-group">
+                                    <label for="coverLetter">Cover Letter *</label>
+                                    <textarea id="coverLetter" required
+                                        placeholder="Explain why you're the best fit for this project..."></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="quotedPrice">Your Price (USD) *</label>
+                                            <input type="number" id="quotedPrice" required min="1" step="0.01"
+                                                placeholder="e.g., 450">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="deliveryTime">Delivery Time *</label>
+                                            <input type="text" id="deliveryTime" required placeholder="e.g., 5 days">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit Proposal</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-4">
+                    <div class="job-detail-sidebar">
+                        <!-- Budget Card -->
+                        <div class="card">
+                            <h3 style="margin-bottom: var(--spacing-md);">Budget</h3>
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: var(--spacing-md);"
+                                id="jobBudget">
+                                $0
+                            </div>
+                            <div style="color: var(--gray); font-size: 0.875rem;">
+                                <div><strong>Word Count:</strong> <span id="sidebarWordCount">0</span></div>
+                                <div><strong>Urgency:</strong> <span id="sidebarUrgency">Regular</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Employer Info -->
+                        <div class="card">
+                            <h3 style="margin-bottom: var(--spacing-md);">Posted By</h3>
+                            <div style="font-weight: 600; margin-bottom: var(--spacing-sm);" id="employerName">Employer
+                            </div>
+                            <div style="color: var(--gray); font-size: 0.875rem;" id="employerCompany"></div>
+                            <div style="margin-top: var(--spacing-md); color: var(--gray); font-size: 0.875rem;">
+                                Posted <span id="postedDate"></span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div id="actionButtons"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proposal Review Modal -->
+    <div id="proposalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Proposal Details</h2>
+                <button class="modal-close" onclick="UI.hideModal('proposalModal')">&times;</button>
+            </div>
+            <div id="proposalModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/jobs.js"></script>
+    <script src="js/proposals.js"></script>
+    <script src="js/payments.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!Auth.requireAuth()) {
+            window.location.href = 'auth.html';
+        }
+
+        const currentUser = Auth.getCurrentUser();
+        const jobId = Utils.getUrlParam('id');
+
+        if (!jobId) {
+            window.location.href = 'jobs.html';
+        }
+
+        // Load job details
+        const job = Jobs.getById(jobId);
+        if (!job) {
+            UI.showToast('Job not found', 'error');
+            setTimeout(() => window.location.href = 'jobs.html', 1000);
+        }
+
+        // Set up navigation based on role
+        const navMenu = document.getElementById('navMenu');
+        if (currentUser.role === CONFIG.USER_ROLES.EMPLOYER) {
+            navMenu.innerHTML = `
+                <li><a href="employer-dashboard.html">Dashboard</a></li>
+                <li><a href="post-job.html">Post Job</a></li>
+                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            `;
+        } else if (currentUser.role === CONFIG.USER_ROLES.FREELANCER) {
+            navMenu.innerHTML = `
+                <li><a href="freelancer-dashboard.html">Dashboard</a></li>
+                <li><a href="jobs.html">Browse Jobs</a></li>
+                <li><a href="transactions.html">Earnings</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            `;
+        }
+
+        document.getElementById('userName').textContent = currentUser.firstName;
+
+        // Display job details
+        document.getElementById('jobTitle').textContent = job.title;
+        document.getElementById('jobDescription').textContent = job.description;
+        document.getElementById('jobRequirements').textContent = job.requirements || 'No specific requirements listed.';
+        document.getElementById('jobBudget').textContent = Utils.formatCurrency(job.budget);
+        document.getElementById('sidebarWordCount').textContent = Utils.formatNumber(job.wordCount);
+        document.getElementById('sidebarUrgency').textContent = CONFIG.URGENCY_LEVELS[job.urgency]?.label || job.urgency;
+        document.getElementById('employerName').textContent = job.employerName;
+        document.getElementById('employerCompany').textContent = job.companyName;
+        document.getElementById('postedDate').textContent = Utils.formatRelativeTime(job.createdAt);
+
+        // Job status badge
+        const statusBadge = {
+            [CONFIG.JOB_STATUS.OPEN]: 'badge-success',
+            [CONFIG.JOB_STATUS.IN_PROGRESS]: 'badge-warning',
+            [CONFIG.JOB_STATUS.COMPLETED]: 'badge-info',
+            [CONFIG.JOB_STATUS.DISPUTED]: 'badge-error'
+        }[job.status] || 'badge-primary';
+
+        document.getElementById('jobStatus').innerHTML = `<span class="badge ${statusBadge}">${job.status.replace('_', ' ')}</span>`;
+
+        // Languages
+        document.getElementById('jobLanguages').innerHTML = `
+            <span class="language-badge">${job.sourceLang} → ${job.targetLang}</span>
+        `;
+
+        // Meta info
+        document.getElementById('jobMeta').innerHTML = `
+            <span class="job-card-meta-item"><i class="fas fa-file-alt"></i> ${Utils.formatNumber(job.wordCount)} words</span>
+            <span class="job-card-meta-item"><i class="fas fa-calendar"></i> ${Utils.formatDate(job.deadline)}</span>
+            <span class="job-card-meta-item"><i class="fas fa-briefcase"></i> ${job.documentType}</span>
+            ${job.specialization ? `<span class="job-card-meta-item"><i class="fas fa-tag"></i> ${job.specialization}</span>` : ''}
+        `;
+
+        // Show different views based on user role
+        if (currentUser.role === CONFIG.USER_ROLES.EMPLOYER && job.employerId === currentUser.id) {
+            // Show proposals for employer
+            showProposalsSection();
+        } else if (currentUser.role === CONFIG.USER_ROLES.FREELANCER && job.status === CONFIG.JOB_STATUS.OPEN) {
+            // Show proposal form for freelancer
+            showProposalForm();
+        }
+
+        function showProposalsSection() {
+            document.getElementById('proposalsSection').classList.remove('hidden');
+            const proposals = Proposals.getByJob(jobId);
+            document.getElementById('proposalCount').textContent = proposals.length;
+
+            const proposalsList = document.getElementById('proposalsList');
+
+            if (proposals.length === 0) {
+                proposalsList.innerHTML = '<div class="empty-state"><p>No proposals yet</p></div>';
+                return;
+            }
+
+            proposalsList.innerHTML = proposals.map(proposal => {
+                const statusBadge = {
+                    [CONFIG.PROPOSAL_STATUS.PENDING]: 'badge-warning',
+                    [CONFIG.PROPOSAL_STATUS.ACCEPTED]: 'badge-success',
+                    [CONFIG.PROPOSAL_STATUS.REJECTED]: 'badge-error'
+                }[proposal.status] || 'badge-primary';
+
+                return `
+                    <div class="card mb-2">
+                        <div class="d-flex justify-between align-center mb-2">
+                            <div>
+                                <h3>${proposal.freelancerName}</h3>
+                                <div class="mt-1">
+                                    ${UI.renderStars(proposal.freelancerRating)}
+                                    <span style="color: var(--gray); font-size: 0.875rem; margin-left: var(--spacing-sm);">
+                                        ${proposal.freelancerCompletedJobs} jobs completed
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
+                                    ${Utils.formatCurrency(proposal.quotedPrice)}
+                                </div>
+                                <span class="badge ${statusBadge}">${proposal.status}</span>
+                            </div>
+                        </div>
+                        <p style="margin: var(--spacing-md) 0;">${Utils.escapeHTML(proposal.coverLetter)}</p>
+                        <div style="color: var(--gray); font-size: 0.875rem; margin-bottom: var(--spacing-md);">
+                            <strong>Delivery:</strong> ${proposal.deliveryTime} | 
+                            <strong>Submitted:</strong> ${Utils.formatRelativeTime(proposal.createdAt)}
+                        </div>
+                        ${proposal.status === CONFIG.PROPOSAL_STATUS.PENDING ? `
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success" onclick="acceptProposal('${proposal.id}')">
+                                    <i class="fas fa-check"></i> Accept Proposal
+                                </button>
+                                <button class="btn btn-secondary" onclick="rejectProposal('${proposal.id}')">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showProposalForm() {
+            // Check if already submitted
+            const existingProposal = Proposals.getByFreelancerAndJob(currentUser.id, jobId);
+
+            if (existingProposal) {
+                document.getElementById('actionButtons').innerHTML = `
+                    <div class="card">
+                        <h3>Your Proposal</h3>
+                        <p style="color: var(--gray);">You have already submitted a proposal for this job.</p>
+                        <span class="badge ${existingProposal.status === CONFIG.PROPOSAL_STATUS.PENDING ? 'badge-warning' : 'badge-success'}">
+                            ${existingProposal.status}
+                        </span>
+                    </div>
+                `;
+                return;
+            }
+
+            document.getElementById('proposalFormSection').classList.remove('hidden');
+            document.getElementById('actionButtons').innerHTML = `
+                <a href="#proposalFormSection" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-paper-plane"></i> Submit Proposal
+                </a>
+            `;
+        }
+
+        // Accept proposal
+        window.acceptProposal = function (proposalId) {
+            UI.confirm('Accept this proposal? Payment will be held in escrow.', () => {
+                const result = Proposals.accept(proposalId);
+                if (result.success) {
+                    UI.showToast('Proposal accepted! Payment held in escrow.', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    UI.showToast(result.error, 'error');
+                }
+            });
+        };
+
+        // Reject proposal
+        window.rejectProposal = function (proposalId) {
+            UI.confirm('Reject this proposal?', () => {
+                const result = Proposals.reject(proposalId);
+                if (result.success) {
+                    UI.showToast('Proposal rejected', 'info');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    UI.showToast(result.error, 'error');
+                }
+            });
+        };
+
+        // Submit proposal (freelancer)
+        const proposalForm = document.getElementById('proposalForm');
+        if (proposalForm) {
+            proposalForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                UI.showLoading(submitBtn);
+
+                const proposalData = {
+                    jobId: jobId,
+                    coverLetter: document.getElementById('coverLetter').value,
+                    quotedPrice: document.getElementById('quotedPrice').value,
+                    deliveryTime: document.getElementById('deliveryTime').value
+                };
+
+                const result = Proposals.submit(proposalData);
+
+                UI.hideLoading(submitBtn);
+
+                if (result.success) {
+                    UI.showToast('Proposal submitted successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    UI.showToast(result.error, 'error');
+                }
+            });
+        }
+
+        // Logout
+        document.getElementById('userMenuBtn').addEventListener('click', () => {
+            if (confirm('Do you want to logout?')) {
+                Auth.logout();
+            }
+        });
+
+        Notifications.updateBadge();
+    </script>
+</body>
+
+</html>

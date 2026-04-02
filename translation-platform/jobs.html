@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Jobs - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">TransLingo</div>
+            <ul class="navbar-menu">
+                <li><a href="freelancer-dashboard.html">Dashboard</a></li>
+                <li><a href="jobs.html">Browse Jobs</a></li>
+                <li><a href="transactions.html">Earnings</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="notification-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" style="display: none;">0</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="userMenuBtn">
+                    <span id="userName">User</span> ▾
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Jobs Listing -->
+    <div class="job-listing">
+        <div class="container">
+            <div class="row">
+                <!-- Filters Sidebar -->
+                <div class="col-3">
+                    <div class="filters-panel">
+                        <h3>Filters</h3>
+
+                        <!-- Search -->
+                        <div class="filter-group">
+                            <label>Search</label>
+                            <input type="text" id="searchQuery" placeholder="Search jobs..." class="filter-input">
+                        </div>
+
+                        <!-- Languages -->
+                        <div class="filter-group">
+                            <label>Source Language</label>
+                            <select id="filterSourceLang" class="filter-select">
+                                <option value="">All Languages</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Target Language</label>
+                            <select id="filterTargetLang" class="filter-select">
+                                <option value="">All Languages</option>
+                            </select>
+                        </div>
+
+                        <!-- Document Type -->
+                        <div class="filter-group">
+                            <label>Document Type</label>
+                            <select id="filterDocType" class="filter-select">
+                                <option value="">All Types</option>
+                            </select>
+                        </div>
+
+                        <!-- Specialization -->
+                        <div class="filter-group">
+                            <label>Specialization</label>
+                            <select id="filterSpecialization" class="filter-select">
+                                <option value="">All Specializations</option>
+                            </select>
+                        </div>
+
+                        <!-- Budget Range -->
+                        <div class="filter-group">
+                            <label>Budget Range</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" id="filterMinBudget" placeholder="Min" class="filter-input">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" id="filterMaxBudget" placeholder="Max" class="filter-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Urgency -->
+                        <div class="filter-group">
+                            <label>Urgency</label>
+                            <select id="filterUrgency" class="filter-select">
+                                <option value="">All Levels</option>
+                                <option value="regular">Regular</option>
+                                <option value="express">Express</option>
+                                <option value="rush">Rush</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" style="width: 100%; margin-top: var(--spacing-md);"
+                            onclick="applyFilters()">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                        <button class="btn btn-secondary" style="width: 100%; margin-top: var(--spacing-sm);"
+                            onclick="clearFilters()">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Jobs List -->
+                <div class="col-9">
+                    <div class="d-flex justify-between align-center mb-3">
+                        <h1>Available Translation Jobs</h1>
+                        <div>
+                            <select id="sortBy" class="filter-select" onchange="applyFilters()">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="budget-high">Highest Budget</option>
+                                <option value="budget-low">Lowest Budget</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="jobsCount" style="color: var(--gray); margin-bottom: var(--spacing-lg);"></div>
+                    <div id="jobsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/jobs.js"></script>
+    <script src="js/proposals.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!Auth.requireAuth()) {
+            window.location.href = 'auth.html';
+        }
+
+        const currentUser = Auth.getCurrentUser();
+        document.getElementById('userName').textContent = currentUser.firstName;
+
+        // Populate filter dropdowns
+        CONFIG.LANGUAGES.forEach(lang => {
+            const option1 = document.createElement('option');
+            option1.value = lang;
+            option1.textContent = lang;
+            document.getElementById('filterSourceLang').appendChild(option1);
+
+            const option2 = document.createElement('option');
+            option2.value = lang;
+            option2.textContent = lang;
+            document.getElementById('filterTargetLang').appendChild(option2);
+        });
+
+        CONFIG.DOCUMENT_TYPES.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            document.getElementById('filterDocType').appendChild(option);
+        });
+
+        CONFIG.SPECIALIZATIONS.forEach(spec => {
+            const option = document.createElement('option');
+            option.value = spec;
+            option.textContent = spec;
+            document.getElementById('filterSpecialization').appendChild(option);
+        });
+
+        // Load and display jobs
+        function loadJobs() {
+            const filters = {
+                search: document.getElementById('searchQuery').value,
+                sourceLang: document.getElementById('filterSourceLang').value,
+                targetLang: document.getElementById('filterTargetLang').value,
+                documentType: document.getElementById('filterDocType').value,
+                specialization: document.getElementById('filterSpecialization').value,
+                minBudget: document.getElementById('filterMinBudget').value,
+                maxBudget: document.getElementById('filterMaxBudget').value,
+                urgency: document.getElementById('filterUrgency').value,
+                status: CONFIG.JOB_STATUS.OPEN
+            };
+
+            let jobs = Jobs.search(filters);
+
+            // Sort
+            const sortBy = document.getElementById('sortBy').value;
+            if (sortBy === 'newest') {
+                jobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            } else if (sortBy === 'oldest') {
+                jobs.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            } else if (sortBy === 'budget-high') {
+                jobs.sort((a, b) => b.budget - a.budget);
+            } else if (sortBy === 'budget-low') {
+                jobs.sort((a, b) => a.budget - b.budget);
+            }
+
+            displayJobs(jobs);
+        }
+
+        function displayJobs(jobs) {
+            const jobsList = document.getElementById('jobsList');
+            const jobsCount = document.getElementById('jobsCount');
+
+            jobsCount.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''} found`;
+
+            if (jobs.length === 0) {
+                jobsList.innerHTML = '<div class="empty-state"><p>No jobs match your filters</p></div>';
+                return;
+            }
+
+            jobsList.innerHTML = jobs.map(job => {
+                const myProposal = Proposals.getByFreelancerAndJob(currentUser.id, job.id);
+
+                return `
+                    <div class="job-card" onclick="window.location.href='job-detail.html?id=${job.id}'">
+                        <div class="job-card-header">
+                            <div>
+                                <h3 class="job-card-title">${Utils.escapeHTML(job.title)}</h3>
+                                <div class="job-card-languages">
+                                    <span class="language-badge">${job.sourceLang} → ${job.targetLang}</span>
+                                    ${job.urgency !== 'regular' ? `<span class="badge badge-warning">${CONFIG.URGENCY_LEVELS[job.urgency]?.label}</span>` : ''}
+                                </div>
+                            </div>
+                            ${myProposal ? `<span class="badge badge-info">Proposal Submitted</span>` : ''}
+                        </div>
+                        <div class="job-card-meta">
+                            <span class="job-card-meta-item"><i class="fas fa-file-alt"></i> ${Utils.formatNumber(job.wordCount)} words</span>
+                            <span class="job-card-meta-item"><i class="fas fa-calendar"></i> ${Utils.formatDate(job.deadline)}</span>
+                            <span class="job-card-meta-item"><i class="fas fa-briefcase"></i> ${job.documentType}</span>
+                            ${job.specialization ? `<span class="job-card-meta-item"><i class="fas fa-tag"></i> ${job.specialization}</span>` : ''}
+                        </div>
+                        <p class="job-card-description">${Utils.truncate(job.description, 150)}</p>
+                        <div class="job-card-footer">
+                            <div>
+                                <strong>${job.proposalCount} proposal${job.proposalCount !== 1 ? 's' : ''}</strong>
+                                <span style="color: var(--gray); margin-left: var(--spacing-sm);">Posted ${Utils.formatRelativeTime(job.createdAt)}</span>
+                            </div>
+                            <div class="job-card-price">${Utils.formatCurrency(job.budget)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.applyFilters = function () {
+            loadJobs();
+        };
+
+        window.clearFilters = function () {
+            document.getElementById('searchQuery').value = '';
+            document.getElementById('filterSourceLang').value = '';
+            document.getElementById('filterTargetLang').value = '';
+            document.getElementById('filterDocType').value = '';
+            document.getElementById('filterSpecialization').value = '';
+            document.getElementById('filterMinBudget').value = '';
+            document.getElementById('filterMaxBudget').value = '';
+            document.getElementById('filterUrgency').value = '';
+            document.getElementById('sortBy').value = 'newest';
+            loadJobs();
+        };
+
+        // Real-time search
+        document.getElementById('searchQuery').addEventListener('input', Utils.debounce(() => {
+            loadJobs();
+        }, 300));
+
+        // Initial load
+        loadJobs();
+
+        // Logout
+        document.getElementById('userMenuBtn').addEventListener('click', () => {
+            if (confirm('Do you want to logout?')) {
+                Auth.logout();
+            }
+        });
+
+        Notifications.updateBadge();
+    </script>
+</body>
+
+</html>

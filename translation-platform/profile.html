@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - TransLingo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">TransLingo</div>
+            <ul class="navbar-menu" id="navMenu"></ul>
+            <div class="navbar-actions">
+                <div class="notification-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" style="display: none;">0</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="userMenuBtn">
+                    <span id="userName">User</span> ▾
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Page -->
+    <div class="container" style="padding: var(--spacing-2xl) 0;">
+        <div class="row">
+            <!-- Profile Sidebar -->
+            <div class="col-4">
+                <div class="card text-center">
+                    <div
+                        style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); margin: 0 auto var(--spacing-lg); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; font-weight: 700;">
+                        <span id="profileInitials"></span>
+                    </div>
+                    <h2 id="profileName"></h2>
+                    <p id="profileRole" style="color: var(--gray); margin-bottom: var(--spacing-lg);"></p>
+                    <div id="profileRating" style="margin-bottom: var(--spacing-lg);"></div>
+                    <div id="profileStats"></div>
+                    <div id="profileActions" style="margin-top: var(--spacing-lg);"></div>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="col-8">
+                <!-- About Section -->
+                <div class="card mb-3">
+                    <h3>About</h3>
+                    <p id="profileBio" style="color: var(--gray); margin-top: var(--spacing-md);"></p>
+
+                    <div style="margin-top: var(--spacing-lg);">
+                        <div class="mb-2">
+                            <i class="fas fa-envelope"
+                                style="color: var(--primary); margin-right: var(--spacing-sm);"></i>
+                            <span id="profileEmail"></span>
+                        </div>
+                        <div class="mb-2" id="profileCompanyDiv">
+                            <i class="fas fa-building"
+                                style="color: var(--primary); margin-right: var(--spacing-sm);"></i>
+                            <span id="profileCompany"></span>
+                        </div>
+                        <div class="mb-2">
+                            <i class="fas fa-calendar"
+                                style="color: var(--primary); margin-right: var(--spacing-sm);"></i>
+                            Member since <span id="profileJoined"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Languages & Skills (Freelancer) -->
+                <div id="languagesSection" class="card mb-3" style="display: none;">
+                    <h3>Languages & Specializations</h3>
+                    <div style="margin-top: var(--spacing-md);">
+                        <h4 style="font-size: 1rem; margin-bottom: var(--spacing-sm);">Languages</h4>
+                        <div id="profileLanguages" class="d-flex gap-2 flex-wrap"></div>
+                    </div>
+                    <div style="margin-top: var(--spacing-lg);">
+                        <h4 style="font-size: 1rem; margin-bottom: var(--spacing-sm);">Specializations</h4>
+                        <div id="profileSpecializations" class="d-flex gap-2 flex-wrap"></div>
+                    </div>
+                </div>
+
+                <!-- Reviews -->
+                <div class="card">
+                    <h3>Reviews (<span id="reviewCount">0</span>)</h3>
+                    <div id="reviewsList" style="margin-top: var(--spacing-lg);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Profile</h2>
+                <button class="modal-close" onclick="UI.hideModal('editProfileModal')">&times;</button>
+            </div>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label for="editBio">Bio</label>
+                    <textarea id="editBio" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editCompany">Company</label>
+                    <input type="text" id="editCompany">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="UI.hideModal('editProfileModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/jobs.js"></script>
+    <script src="js/reviews.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/sample-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!Auth.requireAuth()) {
+            window.location.href = 'auth.html';
+        }
+
+        const currentUser = Auth.getCurrentUser();
+        const profileUserId = Utils.getUrlParam('id') || currentUser.id;
+        const profileUser = Auth.getUserById(profileUserId);
+        const isOwnProfile = profileUserId === currentUser.id;
+
+        if (!profileUser) {
+            UI.showToast('User not found', 'error');
+            setTimeout(() => window.location.href = 'index.html', 1000);
+        }
+
+        document.getElementById('userName').textContent = currentUser.firstName;
+
+        // Set up navigation based on role
+        const navMenu = document.getElementById('navMenu');
+        if (currentUser.role === CONFIG.USER_ROLES.EMPLOYER) {
+            navMenu.innerHTML = `
+                <li><a href="employer-dashboard.html">Dashboard</a></li>
+                <li><a href="post-job.html">Post Job</a></li>
+                <li><a href="transactions.html">Transactions</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            `;
+        } else if (currentUser.role === CONFIG.USER_ROLES.FREELANCER) {
+            navMenu.innerHTML = `
+                <li><a href="freelancer-dashboard.html">Dashboard</a></li>
+                <li><a href="jobs.html">Browse Jobs</a></li>
+                <li><a href="transactions.html">Earnings</a></li>
+                <li><a href="messages.html">Messages</a></li>
+            `;
+        }
+
+        // Display profile
+        document.getElementById('profileInitials').textContent =
+            `${profileUser.firstName[0]}${profileUser.lastName[0]}`;
+        document.getElementById('profileName').textContent =
+            `${profileUser.firstName} ${profileUser.lastName}`;
+        document.getElementById('profileRole').textContent =
+            profileUser.role.charAt(0).toUpperCase() + profileUser.role.slice(1);
+        document.getElementById('profileEmail').textContent = profileUser.email;
+        document.getElementById('profileJoined').textContent = Utils.formatDate(profileUser.createdAt);
+
+        // Bio
+        document.getElementById('profileBio').textContent =
+            profileUser.bio || 'No bio available.';
+
+        // Company
+        if (profileUser.companyName) {
+            document.getElementById('profileCompany').textContent = profileUser.companyName;
+        } else {
+            document.getElementById('profileCompanyDiv').style.display = 'none';
+        }
+
+        // Rating
+        if (profileUser.rating) {
+            document.getElementById('profileRating').innerHTML = `
+                ${UI.renderStars(profileUser.rating)}
+                <div style="margin-top: var(--spacing-xs); color: var(--gray); font-size: 0.875rem;">
+                    ${profileUser.rating.toFixed(1)} out of 5
+                </div>
+            `;
+        }
+
+        // Stats
+        const stats = profileUser.role === CONFIG.USER_ROLES.FREELANCER
+            ? `
+                <div class="d-flex justify-between mb-2">
+                    <span>Completed Jobs</span>
+                    <strong>${profileUser.completedJobs || 0}</strong>
+                </div>
+                <div class="d-flex justify-between mb-2">
+                    <span>Success Rate</span>
+                    <strong>${profileUser.successRate || 100}%</strong>
+                </div>
+                <div class="d-flex justify-between">
+                    <span>Response Time</span>
+                    <strong>${profileUser.responseTime || '< 1 hour'}</strong>
+                </div>
+            `
+            : `
+                <div class="d-flex justify-between mb-2">
+                    <span>Jobs Posted</span>
+                    <strong>${profileUser.jobsPosted || 0}</strong>
+                </div>
+                <div class="d-flex justify-between">
+                    <span>Hire Rate</span>
+                    <strong>${profileUser.hireRate || 100}%</strong>
+                </div>
+            `;
+        document.getElementById('profileStats').innerHTML = stats;
+
+        // Actions
+        if (isOwnProfile) {
+            document.getElementById('profileActions').innerHTML = `
+                <button class="btn btn-primary" style="width: 100%;" onclick="editProfile()">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            `;
+        } else {
+            document.getElementById('profileActions').innerHTML = `
+                <button class="btn btn-primary" style="width: 100%;" onclick="startConversation()">
+                    <i class="fas fa-comment"></i> Send Message
+                </button>
+            `;
+        }
+
+        // Languages & Specializations (Freelancer only)
+        if (profileUser.role === CONFIG.USER_ROLES.FREELANCER) {
+            document.getElementById('languagesSection').style.display = 'block';
+
+            const languages = profileUser.languages || ['English', 'Spanish', 'French'];
+            document.getElementById('profileLanguages').innerHTML = languages.map(lang =>
+                `<span class="badge badge-primary">${lang}</span>`
+            ).join('');
+
+            const specializations = profileUser.specializations || ['Legal', 'Technical'];
+            document.getElementById('profileSpecializations').innerHTML = specializations.map(spec =>
+                `<span class="badge badge-info">${spec}</span>`
+            ).join('');
+        }
+
+        // Load reviews
+        const reviews = Reviews.getByUser(profileUserId);
+        document.getElementById('reviewCount').textContent = reviews.length;
+
+        const reviewsList = document.getElementById('reviewsList');
+        if (reviews.length === 0) {
+            reviewsList.innerHTML = '<p style="color: var(--gray);">No reviews yet</p>';
+        } else {
+            reviewsList.innerHTML = reviews.map(review => `
+                <div style="padding: var(--spacing-md); border-bottom: 1px solid var(--gray-lighter);">
+                    <div class="d-flex justify-between align-center mb-2">
+                        <div>
+                            <strong>${review.reviewerName}</strong>
+                            <div style="margin-top: var(--spacing-xs);">
+                                ${UI.renderStars(review.rating)}
+                            </div>
+                        </div>
+                        <span style="color: var(--gray); font-size: 0.875rem;">
+                            ${Utils.formatRelativeTime(review.createdAt)}
+                        </span>
+                    </div>
+                    <p style="color: var(--gray); margin-top: var(--spacing-sm);">
+                        ${Utils.escapeHTML(review.comment)}
+                    </p>
+                    ${review.jobTitle ? `
+                        <div style="margin-top: var(--spacing-sm); font-size: 0.875rem; color: var(--gray);">
+                            <i class="fas fa-briefcase"></i> ${review.jobTitle}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Edit profile
+        window.editProfile = function () {
+            document.getElementById('editBio').value = profileUser.bio || '';
+            document.getElementById('editCompany').value = profileUser.companyName || '';
+            UI.showModal('editProfileModal');
+        };
+
+        document.getElementById('editProfileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const updates = {
+                bio: document.getElementById('editBio').value,
+                companyName: document.getElementById('editCompany').value
+            };
+
+            const result = Auth.updateProfile(updates);
+
+            if (result.success) {
+                UI.showToast('Profile updated successfully!', 'success');
+                UI.hideModal('editProfileModal');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                UI.showToast(result.error, 'error');
+            }
+        });
+
+        // Start conversation
+        window.startConversation = function () {
+            // This would create a new conversation
+            UI.showToast('Messaging feature coming soon!', 'info');
+        };
+
+        // Logout
+        document.getElementById('userMenuBtn').addEventListener('click', () => {
+            if (confirm('Do you want to logout?')) {
+                Auth.logout();
+            }
+        });
+
+        Notifications.updateBadge();
+    </script>
+</body>
+
+</html>
